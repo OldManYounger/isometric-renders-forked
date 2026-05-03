@@ -7,11 +7,11 @@ import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.util.Mth;
 
 /**
- * Translation helpers for Isometric Renders messages and GUI labels.
+ * Translation helpers for Isometric Renders Forked messages and GUI labels.
  *
  * <p>The translation keys intentionally keep the original Fabric mod's
- * hyphenated key namespace, such as {@code gui.isometric-renders.export}, even
- * though the NeoForge mod id is {@code isometric_renders}.</p>
+ * hyphenated key namespace, such as {@code gui.isometric_renders_forked.export}, even
+ * though the NeoForge mod id is {@code isometric_renders_forked}.</p>
  */
 public final class Translate {
     public static final Component PREFIX = generatePrefix("Isometric Renders", 190, 155);
@@ -20,12 +20,12 @@ public final class Translate {
 
     // Creates a translated chat message component.
     public static MutableComponent make(String key, Object... args) {
-        return Component.translatable("message.isometric-renders." + key, args);
+        return Component.translatable("message.isometric_renders_forked." + key, args);
     }
 
     // Creates a translated GUI component.
     public static MutableComponent gui(String key, Object... args) {
-        return Component.translatable("gui.isometric-renders." + key, args);
+        return Component.translatable("gui.isometric_renders_forked." + key, args);
     }
 
     // Creates a prefixed translated chat message.

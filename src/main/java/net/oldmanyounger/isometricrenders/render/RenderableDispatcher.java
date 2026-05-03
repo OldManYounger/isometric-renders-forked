@@ -7,6 +7,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexSorting;
 import net.minecraft.client.Minecraft;
+import net.oldmanyounger.isometricrenders.IsometricRendersForked;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fStack;
 
@@ -63,7 +64,7 @@ public final class RenderableDispatcher {
 
             renderable.setupLighting(activeModelView);
 
-            net.oldmanyounger.isometricrenders.IsometricRenders.beginRenderableDraw();
+            IsometricRendersForked.beginRenderableDraw();
 
             try {
                 renderable.emitVertices(
@@ -74,7 +75,7 @@ public final class RenderableDispatcher {
 
                 renderable.draw(activeModelView);
             } finally {
-                net.oldmanyounger.isometricrenders.IsometricRenders.endRenderableDraw();
+                IsometricRendersForked.endRenderableDraw();
             }
         } finally {
             modelViewStack.popMatrix();

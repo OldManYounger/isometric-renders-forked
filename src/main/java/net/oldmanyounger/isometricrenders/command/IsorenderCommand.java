@@ -18,12 +18,10 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
-import net.minecraft.world.phys.HitResult;
 import net.neoforged.neoforge.client.event.RegisterClientCommandsEvent;
-import net.oldmanyounger.isometricrenders.IsometricRenders;
+import net.oldmanyounger.isometricrenders.IsometricRendersForked;
 import net.oldmanyounger.isometricrenders.render.AreaRenderable;
 import net.oldmanyounger.isometricrenders.render.BlockStateRenderable;
 import net.oldmanyounger.isometricrenders.render.EntityRenderable;
@@ -92,7 +90,7 @@ public final class IsorenderCommand {
     // Shows the currently loaded port identity.
     private static int showVersion(CommandContext<CommandSourceStack> context) {
         context.getSource().sendSuccess(
-                () -> Translate.msg("version", Component.literal(IsometricRenders.MOD_ID)),
+                () -> Translate.msg("version", Component.literal(IsometricRendersForked.MOD_ID)),
                 false
         );
 

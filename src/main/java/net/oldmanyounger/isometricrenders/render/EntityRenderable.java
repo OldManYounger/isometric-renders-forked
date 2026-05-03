@@ -12,7 +12,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
-import net.oldmanyounger.isometricrenders.IsometricRenders;
+import net.oldmanyounger.isometricrenders.IsometricRendersForked;
 import net.oldmanyounger.isometricrenders.property.DefaultPropertyBundle;
 import net.oldmanyounger.isometricrenders.property.IntProperty;
 import net.oldmanyounger.isometricrenders.util.ExportPathSpec;
@@ -94,7 +94,7 @@ public class EntityRenderable extends DefaultRenderable<EntityRenderable.EntityP
                 return entity;
             }
         } catch (RuntimeException exception) {
-            IsometricRenders.LOGGER.warn("Failed to load entity NBT for {}", entityId, exception);
+            IsometricRendersForked.LOGGER.warn("Failed to load entity NBT for {}", entityId, exception);
         }
 
         return type.create(level);

@@ -2,7 +2,7 @@ package net.oldmanyounger.isometricrenders.util;
 
 import com.mojang.blaze3d.platform.NativeImage;
 import net.minecraft.network.chat.Component;
-import net.oldmanyounger.isometricrenders.IsometricRenders;
+import net.oldmanyounger.isometricrenders.IsometricRendersForked;
 import net.oldmanyounger.isometricrenders.property.GlobalProperties;
 
 import java.io.File;
@@ -36,10 +36,10 @@ public final class ImageIO {
 
             try {
                 image.writeToFile(imageFile.toPath());
-                IsometricRenders.LOGGER.info("Image {} saved", imageFile.getAbsolutePath());
+                IsometricRendersForked.LOGGER.info("Image {} saved", imageFile.getAbsolutePath());
                 future.complete(imageFile);
             } catch (IOException exception) {
-                IsometricRenders.LOGGER.warn("Could not save image {}", imageFile.getAbsolutePath(), exception);
+                IsometricRendersForked.LOGGER.warn("Could not save image {}", imageFile.getAbsolutePath(), exception);
                 future.completeExceptionally(exception);
             } finally {
                 image.close();

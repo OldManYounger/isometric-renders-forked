@@ -1,6 +1,6 @@
 package net.oldmanyounger.isometricrenders.util;
 
-import net.oldmanyounger.isometricrenders.IsometricRenders;
+import net.oldmanyounger.isometricrenders.IsometricRendersForked;
 import net.oldmanyounger.isometricrenders.property.GlobalProperties;
 
 import java.io.File;
@@ -49,16 +49,16 @@ public final class FFmpegDispatcher {
                 process.onExit().join();
                 var output = new String(process.getInputStream().readAllBytes());
 
-                IsometricRenders.LOGGER.info("FFmpeg detected, version: {}", output.split(" ")[2]);
+                IsometricRendersForked.LOGGER.info("FFmpeg detected, version: {}", output.split(" ")[2]);
                 return true;
             } catch (IOException exception) {
-                IsometricRenders.LOGGER.info("Did not detect FFmpeg for reason: {}", exception.getMessage());
+                IsometricRendersForked.LOGGER.info("Did not detect FFmpeg for reason: {}", exception.getMessage());
                 return false;
             }
         }, ForkJoinPool.commonPool()).whenComplete((result, throwable) -> {
             if (throwable != null) {
                 ffmpegDetected = false;
-                IsometricRenders.LOGGER.warn("Could not complete FFmpeg detection", throwable);
+                IsometricRendersForked.LOGGER.warn("Could not complete FFmpeg detection", throwable);
             } else {
                 ffmpegDetected = result;
             }
@@ -95,7 +95,7 @@ public final class FFmpegDispatcher {
                 return animationFile;
             });
         } catch (IOException exception) {
-            IsometricRenders.LOGGER.error("Could not launch FFmpeg", exception);
+            IsometricRendersForked.LOGGER.error("Could not launch FFmpeg", exception);
             return CompletableFuture.failedFuture(exception);
         }
     }
@@ -108,11 +108,11 @@ public final class FFmpegDispatcher {
                         try {
                             Files.delete(deletePath);
                         } catch (IOException exception) {
-                            IsometricRenders.LOGGER.warn("Could not delete sequence frame {}", deletePath, exception);
+                            IsometricRendersForked.LOGGER.warn("Could not delete sequence frame {}", deletePath, exception);
                         }
                     });
         } catch (IOException exception) {
-            IsometricRenders.LOGGER.warn("Could not clean up sequence directory", exception);
+            IsometricRendersForked.LOGGER.warn("Could not clean up sequence directory", exception);
         }
     }
 }

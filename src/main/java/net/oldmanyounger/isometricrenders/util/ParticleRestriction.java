@@ -1,7 +1,7 @@
 package net.oldmanyounger.isometricrenders.util;
 
 import net.minecraft.world.phys.AABB;
-import net.oldmanyounger.isometricrenders.IsometricRenders;
+import net.oldmanyounger.isometricrenders.IsometricRendersForked;
 
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -21,7 +21,7 @@ public class ParticleRestriction<T> {
     public static final Allow<Predicate<AABB>> ALLOW_IN_AREA = new Allow<>();
 
     private static final ParticleRestriction<Supplier<Boolean>> DURING_TICK =
-            new ParticleRestriction<>(ALLOW_DURING_TICK, () -> IsometricRenders.inRenderableTick);
+            new ParticleRestriction<>(ALLOW_DURING_TICK, () -> IsometricRendersForked.inRenderableTick);
     private static final ParticleRestriction<Void> ALWAYS =
             new ParticleRestriction<>(ALLOW_ALWAYS, null);
     private static final ParticleRestriction<Void> NEVER =

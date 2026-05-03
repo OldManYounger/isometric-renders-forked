@@ -13,7 +13,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.oldmanyounger.isometricrenders.IsometricRenders;
+import net.oldmanyounger.isometricrenders.IsometricRendersForked;
 import net.oldmanyounger.isometricrenders.property.DefaultPropertyBundle;
 import net.oldmanyounger.isometricrenders.util.ExportPathSpec;
 import org.jetbrains.annotations.Nullable;
@@ -94,7 +94,7 @@ public class BlockStateRenderable extends DefaultRenderable<DefaultPropertyBundl
         try {
             blockEntity.loadWithComponents(nbt, level.registryAccess());
         } catch (RuntimeException exception) {
-            IsometricRenders.LOGGER.warn("Failed to load block entity NBT for {}", blockEntity.getType(), exception);
+            IsometricRendersForked.LOGGER.warn("Failed to load block entity NBT for {}", blockEntity.getType(), exception);
         }
     }
 

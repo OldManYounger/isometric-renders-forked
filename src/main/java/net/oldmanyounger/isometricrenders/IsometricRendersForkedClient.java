@@ -20,30 +20,30 @@ import org.lwjgl.glfw.GLFW;
  * reintroduced here or through client-only helper classes as each subsystem is
  * ported.</p>
  */
-public final class IsometricRendersClient {
+public final class IsometricRendersForkedClient {
     public static final KeyMapping SELECT_AREA = new KeyMapping(
-            "key.isometric-renders.area_select",
+            "key.isometric_renders_forked.area_select",
             InputConstants.Type.KEYSYM,
             GLFW.GLFW_KEY_C,
-            "key.categories.isometric-renders"
+            "key.categories.isometric_renders_forked"
     );
 
-    private IsometricRendersClient() {}
+    private IsometricRendersForkedClient() {}
 
     // Registers client lifecycle listeners on the mod event bus.
     public static void register(IEventBus modEventBus) {
-        modEventBus.addListener(IsometricRendersClient::onClientSetup);
-        modEventBus.addListener(IsometricRendersClient::registerKeyMappings);
+        modEventBus.addListener(IsometricRendersForkedClient::onClientSetup);
+        modEventBus.addListener(IsometricRendersForkedClient::registerKeyMappings);
 
         // Client commands are registered on NeoForge's main event bus.
         NeoForge.EVENT_BUS.addListener(IsorenderCommand::register);
-        NeoForge.EVENT_BUS.addListener(IsometricRendersClient::onClientTick);
+        NeoForge.EVENT_BUS.addListener(IsometricRendersForkedClient::onClientTick);
     }
 
 
     // Runs once during NeoForge client setup.
     private static void onClientSetup(FMLClientSetupEvent event) {
-        IsometricRenders.LOGGER.info("Isometric Renders client setup complete");
+        IsometricRendersForked.LOGGER.info("Isometric Renders client setup complete");
     }
 
     // Registers client key mappings.

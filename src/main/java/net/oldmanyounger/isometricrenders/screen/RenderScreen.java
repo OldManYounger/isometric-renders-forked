@@ -66,6 +66,9 @@ public class RenderScreen extends Screen {
             this.adjustmentModeButton = this.addRenderableWidget(this.button(panelX + 88, y, 84, BUTTON_HEIGHT, this.adjustmentModeLabel(), button -> this.toggleAdjustmentMode()));
             y += ROW_HEIGHT + 4;
 
+            y = this.addResolutionStepper(panelX, y);
+            y += 4;
+
             y = this.addStepper(panelX, y, properties.scale, -10, 10, -1, 1);
             y = this.addStepper(panelX, y, properties.rotation, -15, 15, -1, 1);
             y = this.addStepper(panelX, y, properties.slant, -5, 5, -1, 1);
@@ -88,6 +91,19 @@ public class RenderScreen extends Screen {
 
         this.addRenderableWidget(this.button(x + 134, y, 38, BUTTON_HEIGHT, Component.literal("+"), button ->
                 property.modify(this.adjustmentDelta(coarseIncrease, fineIncrease))
+        ));
+
+        return y + ROW_HEIGHT;
+    }
+
+    // Adds a two-button stepper row for export resolution.
+    private int addResolutionStepper(int x, int y) {
+        this.addRenderableWidget(this.button(x, y, 38, BUTTON_HEIGHT, Component.literal("-"), button ->
+                this.modifyExportResolution(this.adjustmentDelta(-250, -50))
+        ));
+
+        this.addRenderableWidget(this.button(x + 134, y, 38, BUTTON_HEIGHT, Component.literal("+"), button ->
+                this.modifyExportResolution(this.adjustmentDelta(250, 50))
         ));
 
         return y + ROW_HEIGHT;
@@ -158,6 +174,9 @@ public class RenderScreen extends Screen {
 
         if (this.renderable.properties() instanceof DefaultPropertyBundle properties) {
             int y = 84;
+
+            y = this.drawStepperLabel(guiGraphics, y, Translate.gui("control.resolution"), GlobalProperties.exportResolution);
+            y += 4;
 
             y = this.drawStepperLabel(guiGraphics, y, Translate.gui("control.scale"), properties.scale.get());
             y = this.drawStepperLabel(guiGraphics, y, Translate.gui("control.rotation"), properties.rotation.get());
@@ -255,6 +274,11 @@ public class RenderScreen extends Screen {
     // Chooses the current step amount for a stepper click.
     private int adjustmentDelta(int coarse, int fine) {
         return this.fineAdjustments ? fine : coarse;
+    }
+
+    // Adjusts export resolution while keeping it valid for framebuffer/image creation.
+    private void modifyExportResolution(int delta) {
+        GlobalProperties.exportResolution = Math.max(64, GlobalProperties.exportResolution + delta);
     }
 
     // Resets the common transform properties to their defaults.
