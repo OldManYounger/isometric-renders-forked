@@ -1,0 +1,618 @@
+# Isometric Renders NeoForge 1.21.1 Port Plan
+
+## Goal
+
+Port the Fabric mod **Isometric Renders** into a native **NeoForge 1.21.1** mod in the `Isometric-Renders-Forked` repository.
+
+The source/reference repository is `Isometric Renders`. The target working repository is `Isometric-Renders-Forked`.
+
+The port should preserve the core functionality where practical:
+
+- Render items, blocks, entities, players, tooltips, item atlases, batches, and selected world areas.
+- Export transparent PNG renders to the Minecraft game directory.
+- Preserve the interactive render screen and render-property controls.
+- Preserve animation export where feasible.
+- Preserve command and keybind workflows where feasible.
+- Defer or replace features whose dependencies are unavailable on NeoForge 1.21.1.
+
+## Important Constraints
+
+- The original mod is Fabric-based and appears to target Minecraft 1.21.4.
+- The fork target is NeoForge 1.21.1.
+- This is both a loader port and a Minecraft-version backport.
+- The source uses Yarn names; NeoForge 1.21.1 uses Mojang mappings.
+- The mod touches Minecraft client rendering internals heavily, so mixins must be ported carefully and verified one at a time.
+- Work should proceed in small compileable milestones.
+- Do not attempt to port every file at once.
+- Do not rely on Sinytra Connector as the final solution.
+- Do not directly modify the original source repository except for reading/reference.
+
+## Known Major Dependencies
+
+Original project dependencies include:
+
+- Fabric Loader / Fabric API
+- Fabric Loom
+- Java 21
+- owo-lib
+- worldmesher
+- exo
+- Minecraft client rendering internals
+- Mixins
+- Access widener
+
+NeoForge port equivalents or decisions needed:
+
+- Replace Fabric Loom with NeoForge Gradle tooling.
+- Replace `fabric.mod.json` with `META-INF/neoforge.mods.toml`.
+- Replace Fabric entrypoints with NeoForge mod/event registration.
+- Replace Fabric client events with NeoForge client lifecycle/events.
+- Replace Fabric client commands with NeoForge client command registration.
+- Replace Fabric key binding registration with NeoForge key mapping registration.
+- Replace Fabric access widener with NeoForge access transformers where possible.
+- Retarget mixins to Mojmap names and 1.21.1 descriptors.
+- Verify whether owo-lib has a usable NeoForge 1.21.1 build.
+- Verify whether worldmesher has a usable NeoForge 1.21.1 build.
+- Verify whether exo has a usable NeoForge 1.21.1 build.
+
+## Risk Areas
+
+### Highest Risk
+
+- World-area rendering through `worldmesher`.
+- Framebuffer/render-target mixins.
+- Tooltip positioning/rendering mixins.
+- Particle filtering/capture mixins.
+- World-render suppression during animation capture.
+- Entity/player rendering internals.
+- Any class or method whose names/descriptors changed between Minecraft 1.21.1 and 1.21.4.
+
+### Medium Risk
+
+- owo-ui screen/widget compatibility on NeoForge.
+- NeoForge client command argument differences.
+- Block entity setup and NBT handling.
+- Batch rendering workflows.
+- Animation export and FFmpeg dispatch.
+
+### Lower Risk
+
+- Property classes.
+- Export path utilities.
+- Image writing utilities.
+- Translation helpers.
+- Pure data structures.
+- Most non-loader-specific helper code.
+
+## Recommended Porting Strategy
+
+The port should be done in milestone order. Each milestone should aim to leave the repository in a known state, ideally compiling before moving forward.
+
+## Milestone 1: NeoForge Skeleton
+
+### Objective
+
+Create a minimal NeoForge 1.21.1 mod project that launches and loads on the client.
+
+### Tasks
+
+1. Set up NeoForge Gradle configuration.
+2. Configure Java 21.
+3. Set Minecraft version to 1.21.1.
+4. Set NeoForge version appropriate for 1.21.1.
+5. Create or verify `META-INF/neoforge.mods.toml`.
+6. Preserve the mod id, likely `isometric-renders`, unless NeoForge id constraints require adjustment.
+7. Add a minimal NeoForge mod entry class.
+8. Add a harmless client-side initialization path or log.
+9. Confirm the mod appears in a NeoForge 1.21.1 client.
+
+### Definition of Done
+
+- Gradle syncs.
+- The project builds.
+- Minecraft launches with NeoForge 1.21.1.
+- The mod is detected.
+- No rendering, commands, UI, or keybinds are required yet.
+
+## Milestone 2: Resources and Metadata
+
+### Objective
+
+Bring over safe resource files before code-heavy systems.
+
+### Tasks
+
+1. Copy/adapt icon assets.
+2. Copy/adapt language files.
+3. Review stale or mismatched translation keys.
+4. Add NeoForge metadata fields.
+5. Remove or ignore Fabric-only metadata.
+6. Preserve mod name, description, authorship/license information as appropriate.
+7. Prepare resource folder layout for NeoForge.
+
+### Definition of Done
+
+- Resources are packaged.
+- The mod displays correct metadata.
+- Language keys load without crashing.
+- No Fabric metadata remains in active use.
+
+## Milestone 3: Loader-Independent Utility and Property Code
+
+### Objective
+
+Port simple classes first to establish compile momentum.
+
+### Candidate Areas
+
+- Property abstractions.
+- Integer/float/string/boolean property wrappers.
+- Property bundles.
+- Global render/export property defaults.
+- Export path helpers.
+- Image output helpers.
+- Translation utilities.
+- Clipboard or file utilities if they do not depend heavily on Fabric.
+
+### Tasks
+
+1. Port one package at a time.
+2. Convert Yarn imports and class names to Mojmap.
+3. Remove Fabric dependencies from utility classes.
+4. Compile frequently.
+5. Keep behavior equivalent unless Minecraft 1.21.1 requires a change.
+
+### Definition of Done
+
+- Utility/property packages compile.
+- No Fabric API imports remain in these packages.
+- No renderer or UI functionality is required yet.
+
+## Milestone 4: NeoForge Client Entry and Event Wiring
+
+### Objective
+
+Port the main mod initialization layer without enabling complex rendering yet.
+
+### Tasks
+
+1. Port the main mod class.
+2. Replace `ClientModInitializer` with NeoForge mod/client event setup.
+3. Register client-only code through the appropriate NeoForge client event path.
+4. Add key mapping registration.
+5. Add basic client tick handling.
+6. Stub or disable render-screen opening until UI compiles.
+7. Avoid enabling risky mixins at this stage.
+
+### Definition of Done
+
+- The mod still launches.
+- Client entry logic runs.
+- Key mappings can be registered without crash.
+- No full render functionality is required yet.
+
+## Milestone 5: UI Framework Viability
+
+### Objective
+
+Determine whether owo-ui can be retained on NeoForge 1.21.1.
+
+### Tasks
+
+1. Add owo-lib NeoForge dependency if available.
+2. Port minimal UI helper classes.
+3. Port basic widget classes.
+4. Port an empty or nearly empty render screen shell.
+5. Verify the screen can open without active rendering.
+6. Decide whether to keep owo-ui or replace it.
+
+### Decision Point
+
+If owo-lib NeoForge 1.21.1 is viable:
+
+- Continue porting the existing UI with minimal structural changes.
+
+If owo-lib is not viable:
+
+- Replace UI layer with vanilla/NeoForge screen widgets.
+- Preserve the same user workflows where possible.
+- Treat UI replacement as its own larger milestone.
+
+### Definition of Done
+
+- A client screen can open and close.
+- Basic UI elements render.
+- No render preview/export is required yet.
+
+## Milestone 6: Renderable Abstraction
+
+### Objective
+
+Port the central render abstraction before individual render targets.
+
+### Candidate Classes
+
+- `Renderable`
+- Empty/no-op renderable implementation.
+- Default property bundle classes.
+- Render property interfaces.
+- Export path interfaces.
+
+### Tasks
+
+1. Convert Yarn types to Mojmap equivalents.
+2. Keep the interface shape close to upstream where possible.
+3. Stub methods that depend on unported systems only when necessary.
+4. Compile after each small group of classes.
+
+### Definition of Done
+
+- Core renderable abstractions compile.
+- Render screen can reference a renderable type.
+- No actual Minecraft object rendering is required yet.
+
+## Milestone 7: Simple Item Rendering
+
+### Objective
+
+Get the first real render target working: item rendering.
+
+### Why Item Rendering First
+
+Item rendering is the best first target because it is narrower than blocks/entities/areas and still proves the off-screen rendering/export pipeline.
+
+### Tasks
+
+1. Port item renderable class.
+2. Port enough of the dispatcher to draw an item preview.
+3. Port framebuffer/off-screen image capture only as much as needed.
+4. Export a simple item PNG.
+5. Verify transparent background if possible.
+6. Verify output path under the game directory.
+
+### Definition of Done
+
+- An item can be rendered in the render screen.
+- A PNG can be exported.
+- The PNG is visually correct enough to proceed.
+
+## Milestone 8: Render Screen Feature Completion
+
+### Objective
+
+Restore the interactive render screen controls around the working item renderer.
+
+### Tasks
+
+1. Port scale controls.
+2. Port rotation controls.
+3. Port slant controls.
+4. Port offset controls.
+5. Port resolution controls.
+6. Port background color controls.
+7. Port export button/keybind behavior.
+8. Port clipboard export if feasible.
+9. Reconnect property widgets to render properties.
+
+### Definition of Done
+
+- The user can adjust item render properties.
+- Preview updates correctly.
+- Export respects user settings.
+
+## Milestone 9: Commands
+
+### Objective
+
+Port `/isorender` command workflows after the render screen has a working target.
+
+### Tasks
+
+1. Replace Fabric client command registration with NeoForge client command registration.
+2. Port command root.
+3. Port item command first.
+4. Port tooltip/block/entity/player commands after their renderables exist.
+5. Port namespace/tag/creative-tab batch commands later.
+6. Convert command source and argument types to NeoForge/Mojmap equivalents.
+
+### Definition of Done
+
+- `/isorender item <item>` opens or triggers an item render workflow.
+- Command errors are handled cleanly.
+- Other command branches may remain stubbed until their render targets are ported.
+
+## Milestone 10: Tooltip Rendering
+
+### Objective
+
+Restore item tooltip rendering and export.
+
+### Tasks
+
+1. Port tooltip renderable.
+2. Port tooltip layout/capture logic.
+3. Port or replace tooltip-centering mixin if still needed.
+4. Test normal and complex modded tooltips.
+5. Verify transparent export.
+
+### Definition of Done
+
+- Tooltips render in the preview/export flow.
+- Tooltip PNG output is correctly sized and centered.
+
+## Milestone 11: Block Rendering
+
+### Objective
+
+Port block rendering, including block states and block entities where feasible.
+
+### Tasks
+
+1. Port block-state renderable.
+2. Convert block model rendering calls to Mojmap/NeoForge 1.21.1.
+3. Port block entity handling.
+4. Port NBT parsing/application.
+5. Verify simple blocks first.
+6. Verify blocks with block entities later.
+
+### Definition of Done
+
+- Basic blocks render correctly.
+- Block entities either render correctly or are documented as deferred.
+
+## Milestone 12: Entity and Player Rendering
+
+### Objective
+
+Port entity and player render targets.
+
+### Tasks
+
+1. Port entity renderable.
+2. Convert entity renderer calls to Mojmap/NeoForge 1.21.1.
+3. Port NBT handling for entities.
+4. Port label suppression if needed.
+5. Port player rendering separately.
+6. Preserve named player rendering behavior if feasible.
+7. Verify singleplayer-only restrictions where relevant.
+
+### Definition of Done
+
+- Basic entities render correctly.
+- Player rendering works or is documented as deferred.
+- Entity labels do not pollute exported renders.
+
+## Milestone 13: Batch Rendering and Atlas Export
+
+### Objective
+
+Restore workflows for rendering many items/blocks/tooltips.
+
+### Tasks
+
+1. Port batch render abstractions.
+2. Port item batch export.
+3. Port tooltip batch export.
+4. Port block batch export.
+5. Port namespace/tag/creative-tab target collection.
+6. Port item atlas generation.
+7. Verify filenames and output paths.
+
+### Definition of Done
+
+- Batch item export works.
+- Atlas export works.
+- Other batch types work or are explicitly deferred.
+
+## Milestone 14: Animation Export
+
+### Objective
+
+Restore animated render export where practical.
+
+### Tasks
+
+1. Port animation property controls.
+2. Port frame capture loop.
+3. Port memory/VRAM guard.
+4. Port FFmpeg detection.
+5. Port APNG/GIF/MP4 dispatch.
+6. Verify image-sequence export before video assembly.
+7. Verify world-render suppression mixins only if required.
+
+### Definition of Done
+
+- Animation frame sequences export.
+- FFmpeg formats work if FFmpeg is installed and accessible.
+- Failures are reported cleanly.
+
+## Milestone 15: Inventory Batch Shortcut
+
+### Objective
+
+Restore the inventory/container batch picker workflow.
+
+### Tasks
+
+1. Port inventory screen mixin.
+2. Port Ctrl + F12 detection.
+3. Port batch operation picker screen.
+4. Verify visible item stack collection.
+5. Verify compatibility with vanilla inventory and containers.
+
+### Definition of Done
+
+- Ctrl + F12 opens the batch picker from inventory screens.
+- Selected visible stacks can be exported.
+
+## Milestone 16: Area Selection and World Area Rendering
+
+### Objective
+
+Port selected-world-area rendering last.
+
+### Why Last
+
+This depends on worldmesher or an equivalent mesh-building system and is the least certain subsystem.
+
+### Tasks
+
+1. Verify whether worldmesher supports NeoForge 1.21.1.
+2. If available, add dependency and port integration.
+3. If unavailable, decide between:
+   - Porting worldmesher.
+   - Vendoring required mesh code.
+   - Replacing area rendering with a custom implementation.
+   - Deferring area rendering.
+4. Port area selection state.
+5. Port area selection keybind behavior.
+6. Port area selection HUD.
+7. Port area renderable.
+8. Test small selections before large ones.
+
+### Definition of Done
+
+- Area selection works.
+- Area rendering works for simple regions.
+- If not feasible, the limitation is documented clearly.
+
+## Milestone 17: Mixins and Access Transformers
+
+### Objective
+
+Retarget all required mixins and access changes to NeoForge 1.21.1.
+
+### Rules
+
+- Do not port all mixins blindly.
+- Only enable a mixin when the related feature is being actively restored.
+- Verify target class, method, descriptor, and injection point against NeoForge 1.21.1.
+- Prefer access transformers for access changes when appropriate.
+- Keep each mixin change small and testable.
+
+### Tasks
+
+1. List every Fabric mixin and its purpose.
+2. Mark each mixin as required, optional, obsolete, or deferred.
+3. Convert required mixins to Mojmap names.
+4. Replace access widener entries with access transformers where possible.
+5. Test each mixin independently.
+6. Remove or disable obsolete Fabric-only mixins.
+
+### Definition of Done
+
+- Required mixins apply cleanly.
+- No startup mixin crashes.
+- Each enabled mixin maps to an active feature.
+
+## Milestone 18: External Command Channel / exo
+
+### Objective
+
+Decide whether to preserve the `exo` integration.
+
+### Tasks
+
+1. Verify whether exo supports NeoForge 1.21.1.
+2. Identify all current exo features.
+3. Decide whether to:
+   - Port exo integration.
+   - Replace it with a simpler API.
+   - Defer it.
+   - Remove it from the NeoForge fork.
+4. Ensure removal does not affect normal in-game rendering workflows.
+
+### Definition of Done
+
+- The project builds with or without exo.
+- Main mod features do not depend on exo.
+- Any missing external integration is documented.
+
+## Milestone 19: Packaging, QA, and Release Preparation
+
+### Objective
+
+Prepare the fork for real use.
+
+### Tasks
+
+1. Clean up metadata.
+2. Confirm dependency declarations.
+3. Confirm client-only behavior.
+4. Confirm output folders.
+5. Test in a clean NeoForge 1.21.1 instance.
+6. Test with representative modded items/blocks/entities.
+7. Test high-resolution export limits.
+8. Test failure states.
+9. Review logs for warnings/errors.
+10. Prepare known-issues list.
+
+### Definition of Done
+
+- The mod builds reproducibly.
+- The jar loads in a clean NeoForge 1.21.1 client.
+- Core render/export workflows work.
+- Deferred features are documented.
+
+## Suggested Working Method
+
+Work should proceed as an error-driven compile loop:
+
+1. Choose one milestone.
+2. Inspect only the relevant source files.
+3. Port a small set of classes.
+4. Build.
+5. Fix compile errors.
+6. Launch the client when the milestone requires runtime validation.
+7. Record what works, what is deferred, and what broke.
+8. Move to the next milestone only when the current one is stable enough.
+
+## Suggested Documentation Files
+
+The fork should eventually contain:
+
+- `NEOFORGE_PORT_PLAN.md`
+- `PORT_STATUS.md`
+- `KNOWN_ISSUES.md`
+- `DEPENDENCY_NOTES.md`
+
+`PORT_STATUS.md` should track which original features are:
+
+- Complete
+- Partially ported
+- Stubbed
+- Deferred
+- Removed
+
+## Feature Status Template
+
+Use this format while porting:
+
+| Feature | Status | Notes |
+| --- | --- | --- |
+| NeoForge skeleton | Not started |  |
+| Metadata/resources | Not started |  |
+| Utility/property classes | Not started |  |
+| Client entrypoint | Not started |  |
+| Key mappings | Not started |  |
+| Render screen shell | Not started |  |
+| Item rendering | Not started |  |
+| PNG export | Not started |  |
+| Tooltip rendering | Not started |  |
+| Block rendering | Not started |  |
+| Entity rendering | Not started |  |
+| Player rendering | Not started |  |
+| Commands | Not started |  |
+| Batch export | Not started |  |
+| Atlas export | Not started |  |
+| Animation export | Not started |  |
+| Inventory batch shortcut | Not started |  |
+| Area selection | Not started |  |
+| Area rendering | Not started |  |
+| exo integration | Not started |  |
+
+## Initial Recommended Next Step
+
+Begin with **Milestone 1: NeoForge Skeleton** in `Isometric-Renders-Forked`.
+
+Do not begin by copying all Fabric source files. First establish a minimal NeoForge 1.21.1 project that builds, launches, and loads as a client mod. Once that is stable, start moving over loader-independent utility/property classes.

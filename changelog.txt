@@ -1,0 +1,5 @@
+Version 0.0.1
+    - Initial commit of the Isometric Renders Fork for NeoForge
+    - Rudimentary render is working as intended, with hotkeys for scaling, rotating, and moving
+    - Blocks, items, entities and area selection are supported
+    - Lacking GUI at this point, but mod is functional for intended purpose

@@ -1,0 +1,70 @@
+package net.oldmanyounger.isometricrenders;
+
+import com.mojang.blaze3d.platform.InputConstants;
+import net.minecraft.client.KeyMapping;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
+import net.neoforged.neoforge.common.NeoForge;
+import net.oldmanyounger.isometricrenders.command.IsorenderCommand;
+import net.oldmanyounger.isometricrenders.util.AreaSelectionHelper;
+import org.lwjgl.glfw.GLFW;
+
+/**
+ * Client-only bootstrap for the NeoForge port.
+ *
+ * <p>Rendering, screens, commands, HUD overlays, and key handling should be
+ * reintroduced here or through client-only helper classes as each subsystem is
+ * ported.</p>
+ */
+public final class IsometricRendersClient {
+    public static final KeyMapping SELECT_AREA = new KeyMapping(
+            "key.isometric-renders.area_select",
+            InputConstants.Type.KEYSYM,
+            GLFW.GLFW_KEY_C,
+            "key.categories.isometric-renders"
+    );
+
+    private IsometricRendersClient() {}
+
+    // Registers client lifecycle listeners on the mod event bus.
+    public static void register(IEventBus modEventBus) {
+        modEventBus.addListener(IsometricRendersClient::onClientSetup);
+        modEventBus.addListener(IsometricRendersClient::registerKeyMappings);
+
+        // Client commands are registered on NeoForge's main event bus.
+        NeoForge.EVENT_BUS.addListener(IsorenderCommand::register);
+        NeoForge.EVENT_BUS.addListener(IsometricRendersClient::onClientTick);
+    }
+
+
+    // Runs once during NeoForge client setup.
+    private static void onClientSetup(FMLClientSetupEvent event) {
+        IsometricRenders.LOGGER.info("Isometric Renders client setup complete");
+    }
+
+    // Registers client key mappings.
+    private static void registerKeyMappings(RegisterKeyMappingsEvent event) {
+        event.register(SELECT_AREA);
+    }
+
+    // Handles area-selection key presses after each client tick.
+    private static void onClientTick(ClientTickEvent.Post event) {
+        var minecraft = Minecraft.getInstance();
+
+        if (minecraft.player == null || minecraft.screen != null) {
+            return;
+        }
+
+        while (SELECT_AREA.consumeClick()) {
+            if (Screen.hasShiftDown() || minecraft.player.isShiftKeyDown()) {
+                AreaSelectionHelper.clear();
+            } else {
+                AreaSelectionHelper.selectTargetedPosition();
+            }
+        }
+    }
+}
