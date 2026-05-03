@@ -6,10 +6,13 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.level.Level;
+import net.oldmanyounger.isometricrenders.IsometricRenders;
 import net.oldmanyounger.isometricrenders.property.DefaultPropertyBundle;
 import net.oldmanyounger.isometricrenders.property.IntProperty;
 import net.oldmanyounger.isometricrenders.util.ExportPathSpec;
@@ -19,9 +22,8 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Renderable wrapper for a single entity.
  *
- * <p>This initial NeoForge port supports creating a fresh client-side entity
- * from an entity type. NBT-driven entity creation and passenger copying are
- * deferred until the basic entity render path is verified.</p>
+ * <p>Entities can be created from a type, from command-provided NBT, or by
+ * copying the entity currently targeted by the player.</p>
  */
 public class EntityRenderable extends DefaultRenderable<EntityRenderable.EntityPropertyBundle> implements TickingRenderable<EntityRenderable.EntityPropertyBundle> {
     private final Entity entity;
@@ -37,29 +39,76 @@ public class EntityRenderable extends DefaultRenderable<EntityRenderable.EntityP
 
     // Creates a client-side entity renderable from an entity type.
     public static @Nullable EntityRenderable of(EntityType<?> type) {
+        return of(type, null);
+    }
+
+    // Creates a client-side entity renderable from an entity type and optional NBT.
+    public static @Nullable EntityRenderable of(EntityType<?> type, @Nullable CompoundTag nbt) {
         var minecraft = Minecraft.getInstance();
 
         if (minecraft.level == null) {
             return null;
         }
 
-        Entity entity = type.create(minecraft.level);
+        Entity entity = createEntity(type, nbt, minecraft.level);
 
         if (entity == null) {
             return null;
         }
 
-        var player = minecraft.player;
-
-        if (player != null) {
-            entity.moveTo(player.getX(), player.getY(), player.getZ(), 0.0F, 0.0F);
-        } else {
-            entity.moveTo(0.0D, 0.0D, 0.0D, 0.0F, 0.0F);
-        }
-
+        placeNearPlayer(entity);
         entity.setOldPosAndRot();
 
         return new EntityRenderable(entity);
+    }
+
+    // Copies the targeted entity into a standalone renderable entity.
+    public static @Nullable EntityRenderable copyOf(Entity source) {
+        CompoundTag nbt = source.saveWithoutId(new CompoundTag());
+        ResourceLocation entityId = BuiltInRegistries.ENTITY_TYPE.getKey(source.getType());
+
+        if (entityId != null) {
+            nbt.putString("id", entityId.toString());
+        }
+
+        return of(source.getType(), nbt);
+    }
+
+    // Creates an entity from NBT when supplied, otherwise from the entity type.
+    private static @Nullable Entity createEntity(EntityType<?> type, @Nullable CompoundTag nbt, Level level) {
+        if (nbt == null) {
+            return type.create(level);
+        }
+
+        CompoundTag copiedNbt = nbt.copy();
+        ResourceLocation entityId = BuiltInRegistries.ENTITY_TYPE.getKey(type);
+
+        if (entityId != null) {
+            copiedNbt.putString("id", entityId.toString());
+        }
+
+        try {
+            Entity entity = EntityType.loadEntityRecursive(copiedNbt, level, loadedEntity -> loadedEntity);
+
+            if (entity != null) {
+                return entity;
+            }
+        } catch (RuntimeException exception) {
+            IsometricRenders.LOGGER.warn("Failed to load entity NBT for {}", entityId, exception);
+        }
+
+        return type.create(level);
+    }
+
+    // Places render-only entities near the client player for renderer context.
+    private static void placeNearPlayer(Entity entity) {
+        var player = Minecraft.getInstance().player;
+
+        if (player != null) {
+            entity.moveTo(player.getX(), player.getY(), player.getZ(), entity.getYRot(), entity.getXRot());
+        } else {
+            entity.moveTo(0.0D, 0.0D, 0.0D, entity.getYRot(), entity.getXRot());
+        }
     }
 
     // Disables entity shadows before preview/export rendering.
@@ -108,7 +157,7 @@ public class EntityRenderable extends DefaultRenderable<EntityRenderable.EntityP
         return EntityPropertyBundle.INSTANCE;
     }
 
-    // Entity particles will eventually be allowed only during renderable ticks.
+    // Entity particles are allowed only during renderable ticks.
     @Override
     public ParticleRestriction<?> particleRestriction() {
         return ParticleRestriction.duringTick();

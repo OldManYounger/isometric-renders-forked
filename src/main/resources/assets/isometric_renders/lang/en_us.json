@@ -9,24 +9,32 @@
   "gui.isometric-renders.exporter.jobs": "Export Jobs: %s",
 
   "gui.isometric-renders.preview_only": "Temporary preview screen",
+  "gui.isometric-renders.tooltip_status": "Tooltip preview",
   "gui.isometric-renders.transform_status": "Scale: %s  Rotation: %s  Slant: %s",
   "gui.isometric-renders.transform_status_entity": "Scale: %s  Rotation: %s  Slant: %s  Yaw: %s  Pitch: %s",
 
   "message.isometric-renders.command_status": "Isometric Renders NeoForge port is loaded. Rendering UI is not ported yet.",
   "message.isometric-renders.version": "Running Isometric Renders NeoForge port as %s",
+
   "message.isometric-renders.item_render_ready": "Prepared item render for %s. Default output path: %s",
   "message.isometric-renders.item_render_opened": "Opened item render preview for %s. Default output path: %s",
+  "message.isometric-renders.tooltip_render_opened": "Opened tooltip render preview for %s. Default output path: %s",
   "message.isometric-renders.block_render_opened": "Opened block render preview for %s. Default output path: %s",
   "message.isometric-renders.entity_render_opened": "Opened entity render preview for %s. Default output path: %s",
+  "message.isometric-renders.area_render_opened": "Opened selected area render preview",
+  "message.isometric-renders.area_render_opened_with_size": "Opened area render preview for %s block positions. Default output path: %s",
+
   "message.isometric-renders.entity_render_failed": "Could not create entity render preview for %s",
+
   "message.isometric-renders.exported_as": "Exported as: %s",
   "message.isometric-renders.export_failed": "Export failed: %s",
 
+  "message.isometric-renders.no_item": "No item in main hand",
   "message.isometric-renders.no_block": "No block selected",
+  "message.isometric-renders.no_entity": "No entity selected",
   "message.isometric-renders.incomplete_selection": "You do not have a completed area selection",
+
   "message.isometric-renders.selection_cleared": "Area selection cleared",
   "message.isometric-renders.selection_started": "Area selection started at %s",
-  "message.isometric-renders.selection_finished": "Area selection finished from %s to %s",
-  "message.isometric-renders.area_render_opened": "Opened selected area render preview",
-  "message.isometric-renders.area_render_opened_with_size": "Opened area render preview for %s block positions. Default output path: %s"
+  "message.isometric-renders.selection_finished": "Area selection finished from %s to %s"
 }

@@ -10,6 +10,7 @@ import net.oldmanyounger.isometricrenders.property.GlobalProperties;
 import net.oldmanyounger.isometricrenders.render.EntityRenderable;
 import net.oldmanyounger.isometricrenders.render.Renderable;
 import net.oldmanyounger.isometricrenders.render.RenderableDispatcher;
+import net.oldmanyounger.isometricrenders.render.TooltipRenderable;
 import net.oldmanyounger.isometricrenders.util.ImageIO;
 import net.oldmanyounger.isometricrenders.util.Translate;
 import org.lwjgl.glfw.GLFW;
@@ -41,16 +42,20 @@ public class RenderScreen extends Screen {
         this.lastPartialTick = partialTick;
         this.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
 
-        // Flush GUI batches before temporarily replacing projection/model-view state.
-        guiGraphics.flush();
+        if (this.renderable instanceof TooltipRenderable tooltipRenderable) {
+            tooltipRenderable.renderTooltip(guiGraphics, this.width, this.height);
+        } else {
+            // Flush GUI batches before temporarily replacing projection/model-view state.
+            guiGraphics.flush();
 
-        RenderSystem.enableDepthTest();
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
-        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+            RenderSystem.enableDepthTest();
+            RenderSystem.enableBlend();
+            RenderSystem.defaultBlendFunc();
+            RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
 
-        float aspectRatio = this.height == 0 ? 1.0F : this.width / (float) this.height;
-        RenderableDispatcher.drawIntoActiveFramebuffer(this.renderable, aspectRatio, partialTick);
+            float aspectRatio = this.height == 0 ? 1.0F : this.width / (float) this.height;
+            RenderableDispatcher.drawIntoActiveFramebuffer(this.renderable, aspectRatio, partialTick);
+        }
 
         // Continue normal GUI drawing after the custom render pass.
         guiGraphics.drawCenteredString(this.font, this.title, this.width / 2, 12, 0xFFFFFFFF);
@@ -75,6 +80,10 @@ public class RenderScreen extends Screen {
 
     // Applies temporary keyboard controls to the active render properties.
     private boolean handleTransformKey(int keyCode, int modifiers) {
+        if (this.renderable instanceof TooltipRenderable) {
+            return false;
+        }
+
         if (!(this.renderable.properties() instanceof DefaultPropertyBundle properties)) {
             return false;
         }
@@ -151,6 +160,10 @@ public class RenderScreen extends Screen {
 
     // Builds the temporary transform status line.
     private Component transformStatus() {
+        if (this.renderable instanceof TooltipRenderable) {
+            return Translate.gui("tooltip_status");
+        }
+
         if (!(this.renderable.properties() instanceof DefaultPropertyBundle properties)) {
             return Translate.gui("preview_only");
         }
@@ -176,7 +189,9 @@ public class RenderScreen extends Screen {
 
     // Exports the current renderable to a PNG.
     private void exportPng() {
-        var image = RenderableDispatcher.drawIntoImage(this.renderable, this.lastPartialTick, GlobalProperties.exportResolution);
+        var image = this.renderable instanceof TooltipRenderable tooltipRenderable
+                ? tooltipRenderable.drawIntoImage(GlobalProperties.exportResolution)
+                : RenderableDispatcher.drawIntoImage(this.renderable, this.lastPartialTick, GlobalProperties.exportResolution);
 
         ImageIO.save(image, this.renderable.exportPath()).whenComplete((file, throwable) -> {
             Minecraft.getInstance().execute(() -> {
