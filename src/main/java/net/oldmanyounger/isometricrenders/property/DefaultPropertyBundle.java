@@ -14,7 +14,7 @@ import org.joml.Matrix4fStack;
 public class DefaultPropertyBundle implements PropertyBundle {
     private static final DefaultPropertyBundle INSTANCE = new DefaultPropertyBundle();
 
-    public final IntProperty scale = IntProperty.of(100, 0, 500);
+    public final IntProperty scale = IntProperty.of(50, 0, 500);
     public final IntProperty rotation = IntProperty.of(135, 0, 360).withRollover();
     public final IntProperty slant = IntProperty.of(30, -90, 90);
     public final IntProperty lightAngle = IntProperty.of(-45, -45, 45);

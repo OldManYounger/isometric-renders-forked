@@ -133,7 +133,7 @@ public class AreaRenderable extends DefaultRenderable<AreaRenderable.AreaPropert
         public static final AreaPropertyBundle INSTANCE = new AreaPropertyBundle();
 
         private AreaPropertyBundle() {
-            this.scale.setDefaultValue(100).setToDefault();
+            this.scale.setDefaultValue(50).setToDefault();
             this.slant.setDefaultValue(30).setToDefault();
             this.rotation.setDefaultValue(135).setToDefault();
         }

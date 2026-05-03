@@ -3,27 +3,34 @@ package net.oldmanyounger.isometricrenders.screen;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.oldmanyounger.isometricrenders.property.DefaultPropertyBundle;
 import net.oldmanyounger.isometricrenders.property.GlobalProperties;
+import net.oldmanyounger.isometricrenders.property.IntProperty;
 import net.oldmanyounger.isometricrenders.render.EntityRenderable;
 import net.oldmanyounger.isometricrenders.render.Renderable;
 import net.oldmanyounger.isometricrenders.render.RenderableDispatcher;
 import net.oldmanyounger.isometricrenders.render.TooltipRenderable;
 import net.oldmanyounger.isometricrenders.util.ImageIO;
 import net.oldmanyounger.isometricrenders.util.Translate;
-import org.lwjgl.glfw.GLFW;
 
 /**
- * Temporary vanilla preview screen for renderables.
+ * Vanilla preview and control screen for renderables.
  *
- * <p>The original mod uses owo-ui for the final control-heavy render screen.
- * This screen exists to validate the NeoForge render and export paths before
- * the final UI dependency is introduced.</p>
+ * <p>This screen is the first no-owo GUI pass for the NeoForge port. It keeps
+ * the existing preview and export behavior while adding clickable controls for
+ * the most important transform properties.</p>
  */
 public class RenderScreen extends Screen {
+    private static final int PANEL_WIDTH = 176;
+    private static final int BUTTON_HEIGHT = 20;
+    private static final int ROW_HEIGHT = 24;
+
     private final Renderable<?> renderable;
+    private Button adjustmentModeButton;
+    private boolean fineAdjustments = false;
     private float lastPartialTick = 0.0F;
 
     /**
@@ -36,11 +43,75 @@ public class RenderScreen extends Screen {
         this.renderable = renderable;
     }
 
-    // Draws the screen background, renderable preview, and temporary status text.
+    // ==================================
+    //  WIDGET SETUP
+    // ==================================
+
+    // Creates vanilla controls for the current render target.
+    @Override
+    protected void init() {
+        int panelX = this.panelX();
+        int y = 32;
+
+        this.addRenderableWidget(this.button(panelX, y, 84, BUTTON_HEIGHT, Translate.gui("control.export"), button -> this.exportPng()));
+        this.addRenderableWidget(this.button(panelX + 88, y, 84, BUTTON_HEIGHT, Translate.gui("control.done"), button -> this.onClose()));
+        y += ROW_HEIGHT;
+
+        if (this.renderable instanceof TooltipRenderable) {
+            return;
+        }
+
+        if (this.renderable.properties() instanceof DefaultPropertyBundle properties) {
+            this.addRenderableWidget(this.button(panelX, y, 84, BUTTON_HEIGHT, Translate.gui("control.reset"), button -> this.resetDefaultProperties(properties)));
+            this.adjustmentModeButton = this.addRenderableWidget(this.button(panelX + 88, y, 84, BUTTON_HEIGHT, this.adjustmentModeLabel(), button -> this.toggleAdjustmentMode()));
+            y += ROW_HEIGHT + 4;
+
+            y = this.addStepper(panelX, y, properties.scale, -10, 10, -1, 1);
+            y = this.addStepper(panelX, y, properties.rotation, -15, 15, -1, 1);
+            y = this.addStepper(panelX, y, properties.slant, -5, 5, -1, 1);
+            y = this.addStepper(panelX, y, properties.xOffset, -100, 100, -10, 10);
+            y = this.addStepper(panelX, y, properties.yOffset, -100, 100, -10, 10);
+
+            if (properties instanceof EntityRenderable.EntityPropertyBundle entityProperties) {
+                y += 4;
+                y = this.addStepper(panelX, y, entityProperties.yaw, -15, 15, -1, 1);
+                this.addStepper(panelX, y, entityProperties.pitch, -5, 5, -1, 1);
+            }
+        }
+    }
+
+    // Adds a two-button stepper row for a property.
+    private int addStepper(int x, int y, IntProperty property, int coarseDecrease, int coarseIncrease, int fineDecrease, int fineIncrease) {
+        this.addRenderableWidget(this.button(x, y, 38, BUTTON_HEIGHT, Component.literal("-"), button ->
+                property.modify(this.adjustmentDelta(coarseDecrease, fineDecrease))
+        ));
+
+        this.addRenderableWidget(this.button(x + 134, y, 38, BUTTON_HEIGHT, Component.literal("+"), button ->
+                property.modify(this.adjustmentDelta(coarseIncrease, fineIncrease))
+        ));
+
+        return y + ROW_HEIGHT;
+    }
+
+    // Creates a vanilla button with consistent sizing.
+    private Button button(int x, int y, int width, int height, Component label, Button.OnPress onPress) {
+        return Button.builder(label, onPress)
+                .bounds(x, y, width, height)
+                .build();
+    }
+
+    // ==================================
+    //  RENDERING
+    // ==================================
+
+    // Draws the screen background, renderable preview, controls, and status text.
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         this.lastPartialTick = partialTick;
-        this.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
+
+        // Use the transparent background path because Screen.renderBackground applies
+        // Minecraft's menu blur shader, which blurs the preview and control panel.
+        this.renderTransparentBackground(guiGraphics);
 
         if (this.renderable instanceof TooltipRenderable tooltipRenderable) {
             tooltipRenderable.renderTooltip(guiGraphics, this.width, this.height);
@@ -54,92 +125,136 @@ public class RenderScreen extends Screen {
             RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
 
             float aspectRatio = this.height == 0 ? 1.0F : this.width / (float) this.height;
-            RenderableDispatcher.drawIntoActiveFramebuffer(this.renderable, aspectRatio, partialTick);
+            RenderableDispatcher.drawIntoActiveFramebuffer(this.renderable, aspectRatio, partialTick, modelViewStack ->
+                    modelViewStack.translate(this.previewXOffset(), 0.0F, 0.0F)
+            );
         }
 
-        // Continue normal GUI drawing after the custom render pass.
-        guiGraphics.drawCenteredString(this.font, this.title, this.width / 2, 12, 0xFFFFFFFF);
-        guiGraphics.drawCenteredString(this.font, this.transformStatus(), this.width / 2, this.height - 34, 0xFFAAAAAA);
-        guiGraphics.drawCenteredString(this.font, ImageIO.progressText(), this.width / 2, this.height - 22, 0xFFAAAAAA);
+        this.renderPreviewFrame(guiGraphics);
+        this.renderControlPanel(guiGraphics);
+
+        // Render vanilla widgets manually. Calling super.render would draw the blurred
+        // menu background a second time over the preview.
+        for (net.minecraft.client.gui.components.Renderable widget : this.renderables) {
+            widget.render(guiGraphics, mouseX, mouseY, partialTick);
+        }
+
+        guiGraphics.drawCenteredString(this.font, this.title, this.previewCenterX(), 12, 0xFFFFFFFF);
     }
 
-    // Handles temporary preview-screen hotkeys.
-    @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        if (keyCode == GLFW.GLFW_KEY_F12) {
-            this.exportPng();
-            return true;
-        }
+    // Draws control labels and current values beside the vanilla buttons.
+    private void renderControlPanel(GuiGraphics guiGraphics) {
+        int panelX = this.panelX();
+        int panelRight = panelX + PANEL_WIDTH;
+        int panelBottom = this.height - 44;
 
-        if (this.handleTransformKey(keyCode, modifiers)) {
-            return true;
-        }
+        guiGraphics.fill(panelX - 6, 26, panelRight + 6, panelBottom, 0xAA101010);
+        guiGraphics.drawString(this.font, Translate.gui("control.panel"), panelX, 14, 0xFFFFFFFF, false);
 
-        return super.keyPressed(keyCode, scanCode, modifiers);
-    }
-
-    // Applies temporary keyboard controls to the active render properties.
-    private boolean handleTransformKey(int keyCode, int modifiers) {
         if (this.renderable instanceof TooltipRenderable) {
-            return false;
+            guiGraphics.drawCenteredString(this.font, Translate.gui("tooltip_status"), panelX + PANEL_WIDTH / 2, 62, 0xFFAAAAAA);
+            return;
         }
 
-        if (!(this.renderable.properties() instanceof DefaultPropertyBundle properties)) {
-            return false;
-        }
+        if (this.renderable.properties() instanceof DefaultPropertyBundle properties) {
+            int y = 84;
 
-        boolean shift = (modifiers & GLFW.GLFW_MOD_SHIFT) != 0;
-        int rotationStep = shift ? 45 : 15;
-        int slantStep = shift ? 15 : 5;
-        int scaleStep = shift ? 50 : 10;
-        int offsetStep = shift ? 500 : 100;
+            y = this.drawStepperLabel(guiGraphics, y, Translate.gui("control.scale"), properties.scale.get());
+            y = this.drawStepperLabel(guiGraphics, y, Translate.gui("control.rotation"), properties.rotation.get());
+            y = this.drawStepperLabel(guiGraphics, y, Translate.gui("control.slant"), properties.slant.get());
+            y = this.drawStepperLabel(guiGraphics, y, Translate.gui("control.x_offset"), properties.xOffset.get());
+            y = this.drawStepperLabel(guiGraphics, y, Translate.gui("control.y_offset"), properties.yOffset.get());
 
-        switch (keyCode) {
-            case GLFW.GLFW_KEY_A -> properties.rotation.modify(-rotationStep);
-            case GLFW.GLFW_KEY_D -> properties.rotation.modify(rotationStep);
-            case GLFW.GLFW_KEY_W -> properties.slant.modify(slantStep);
-            case GLFW.GLFW_KEY_S -> properties.slant.modify(-slantStep);
-            case GLFW.GLFW_KEY_EQUAL, GLFW.GLFW_KEY_KP_ADD -> properties.scale.modify(scaleStep);
-            case GLFW.GLFW_KEY_MINUS, GLFW.GLFW_KEY_KP_SUBTRACT -> properties.scale.modify(-scaleStep);
-            case GLFW.GLFW_KEY_LEFT -> properties.xOffset.modify(-offsetStep);
-            case GLFW.GLFW_KEY_RIGHT -> properties.xOffset.modify(offsetStep);
-            case GLFW.GLFW_KEY_UP -> properties.yOffset.modify(offsetStep);
-            case GLFW.GLFW_KEY_DOWN -> properties.yOffset.modify(-offsetStep);
-            case GLFW.GLFW_KEY_R -> this.resetDefaultProperties(properties);
-            case GLFW.GLFW_KEY_J -> {
-                if (properties instanceof EntityRenderable.EntityPropertyBundle entityProperties) {
-                    entityProperties.yaw.modify(-rotationStep);
-                } else {
-                    return false;
-                }
-            }
-            case GLFW.GLFW_KEY_L -> {
-                if (properties instanceof EntityRenderable.EntityPropertyBundle entityProperties) {
-                    entityProperties.yaw.modify(rotationStep);
-                } else {
-                    return false;
-                }
-            }
-            case GLFW.GLFW_KEY_I -> {
-                if (properties instanceof EntityRenderable.EntityPropertyBundle entityProperties) {
-                    entityProperties.pitch.modify(slantStep);
-                } else {
-                    return false;
-                }
-            }
-            case GLFW.GLFW_KEY_K -> {
-                if (properties instanceof EntityRenderable.EntityPropertyBundle entityProperties) {
-                    entityProperties.pitch.modify(-slantStep);
-                } else {
-                    return false;
-                }
-            }
-            default -> {
-                return false;
+            if (properties instanceof EntityRenderable.EntityPropertyBundle entityProperties) {
+                y += 4;
+                y = this.drawStepperLabel(guiGraphics, y, Translate.gui("control.entity_yaw"), entityProperties.yaw.get());
+                this.drawStepperLabel(guiGraphics, y, Translate.gui("control.entity_pitch"), entityProperties.pitch.get());
             }
         }
+    }
 
-        return true;
+    // Draws a subtle frame showing the square projection used by PNG exports.
+    private void renderPreviewFrame(GuiGraphics guiGraphics) {
+        if (this.renderable instanceof TooltipRenderable) {
+            return;
+        }
+
+        int size = this.previewFrameSize();
+        int centerX = this.previewCenterX();
+        int centerY = this.height / 2;
+        int left = centerX - size / 2;
+        int top = centerY - size / 2;
+        int right = left + size;
+        int bottom = top + size;
+        int borderColor = 0x55FFFFFF;
+        int centerColor = 0x66FFFFFF;
+
+        // This frame represents the square export projection, not a clipping mask.
+        guiGraphics.fill(left, top, right, top + 1, borderColor);
+        guiGraphics.fill(left, bottom - 1, right, bottom, borderColor);
+        guiGraphics.fill(left, top, left + 1, bottom, borderColor);
+        guiGraphics.fill(right - 1, top, right, bottom, borderColor);
+
+        // Draw a small center mark so offsets have an obvious reference point.
+        guiGraphics.fill(centerX - 5, centerY, centerX + 6, centerY + 1, centerColor);
+        guiGraphics.fill(centerX, centerY - 5, centerX + 1, centerY + 6, centerColor);
+    }
+
+    // Draws one centered property label between a stepper's minus and plus buttons.
+    private int drawStepperLabel(GuiGraphics guiGraphics, int y, Component label, int value) {
+        int centerX = this.panelX() + PANEL_WIDTH / 2;
+        Component text = Component.literal("")
+                .append(label)
+                .append(Component.literal(": " + value));
+
+        guiGraphics.drawCenteredString(this.font, text, centerX, y + 6, 0xFFE0E0E0);
+        return y + ROW_HEIGHT;
+    }
+
+    // Computes the left edge of the right-side control panel.
+    private int panelX() {
+        return Math.max(8, this.width - PANEL_WIDTH - 14);
+    }
+
+    // Computes the horizontal offset needed to center previews left of the controls.
+    private float previewXOffset() {
+        return (this.previewCenterX() - this.width / 2.0F) * 2.0F / Math.max(1.0F, this.height);
+    }
+
+    // Returns the x-coordinate where renderables should visually center.
+    private int previewCenterX() {
+        int availableRight = Math.max(120, this.panelX() - 18);
+        return availableRight / 2;
+    }
+
+    // Returns the on-screen size of the square export projection.
+    private int previewFrameSize() {
+        return Math.max(1, this.height - 2);
+    }
+
+    // ==================================
+    //  STATE
+    // ==================================
+
+    // Toggles between coarse and fine GUI adjustment steps.
+    private void toggleAdjustmentMode() {
+        this.fineAdjustments = !this.fineAdjustments;
+
+        if (this.adjustmentModeButton != null) {
+            this.adjustmentModeButton.setMessage(this.adjustmentModeLabel());
+        }
+    }
+
+    // Returns the label for the current adjustment mode.
+    private Component adjustmentModeLabel() {
+        return this.fineAdjustments
+                ? Translate.gui("control.fine")
+                : Translate.gui("control.coarse");
+    }
+
+    // Chooses the current step amount for a stepper click.
+    private int adjustmentDelta(int coarse, int fine) {
+        return this.fineAdjustments ? fine : coarse;
     }
 
     // Resets the common transform properties to their defaults.
