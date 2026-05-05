@@ -1,0 +1,55 @@
+{
+  "key.categories.isometric-renders-forked": "Isometric Renders",
+  "key.isometric-renders-forked.area_select": "Select Area",
+
+  "gui.isometric-renders-forked.render_screen": "Isometric Renders Preview",
+  "gui.isometric-renders-forked.export_hint": "F12: Export PNG",
+
+  "gui.isometric-renders-forked.exporter.idle": "Exporter Idle",
+  "gui.isometric-renders-forked.exporter.jobs": "Export Jobs: %s",
+
+  "gui.isometric-renders-forked.preview_only": "Temporary preview screen",
+  "gui.isometric-renders-forked.tooltip_status": "Tooltip preview",
+  "gui.isometric-renders-forked.transform_status": "Scale: %s  Rotation: %s  Slant: %s",
+  "gui.isometric-renders-forked.transform_status_entity": "Scale: %s  Rotation: %s  Slant: %s  Yaw: %s  Pitch: %s",
+
+  "gui.isometric-renders-forked.control.panel": "Controls",
+  "gui.isometric-renders-forked.control.export": "Export",
+  "gui.isometric-renders-forked.control.done": "Done",
+  "gui.isometric-renders-forked.control.reset": "Reset",
+  "gui.isometric-renders-forked.control.scale": "Scale",
+  "gui.isometric-renders-forked.control.rotation": "Rotation",
+  "gui.isometric-renders-forked.control.slant": "Slant",
+  "gui.isometric-renders-forked.control.x_offset": "X Offset",
+  "gui.isometric-renders-forked.control.y_offset": "Y Offset",
+  "gui.isometric-renders-forked.control.entity_yaw": "Entity Yaw",
+  "gui.isometric-renders-forked.control.entity_pitch": "Entity Pitch",
+  "gui.isometric-renders-forked.control.coarse": "Coarse",
+  "gui.isometric-renders-forked.control.fine": "Fine",
+  "gui.isometric-renders-forked.control.resolution": "Resolution",
+
+  "message.isometric-renders-forked.command_status": "Isometric Renders NeoForge port is loaded. Rendering UI is not ported yet.",
+  "message.isometric-renders-forked.version": "Running Isometric Renders NeoForge port as %s",
+
+  "message.isometric-renders-forked.item_render_ready": "Prepared item render for %s. Default output path: %s",
+  "message.isometric-renders-forked.item_render_opened": "Opened item render preview for %s. Default output path: %s",
+  "message.isometric-renders-forked.tooltip_render_opened": "Opened tooltip render preview for %s. Default output path: %s",
+  "message.isometric-renders-forked.block_render_opened": "Opened block render preview for %s. Default output path: %s",
+  "message.isometric-renders-forked.entity_render_opened": "Opened entity render preview for %s. Default output path: %s",
+  "message.isometric-renders-forked.area_render_opened": "Opened selected area render preview",
+  "message.isometric-renders-forked.area_render_opened_with_size": "Opened area render preview for %s block positions. Default output path: %s",
+
+  "message.isometric-renders-forked.entity_render_failed": "Could not create entity render preview for %s",
+
+  "message.isometric-renders-forked.exported_as": "Exported as: %s",
+  "message.isometric-renders-forked.export_failed": "Export failed: %s",
+
+  "message.isometric-renders-forked.no_item": "No item in main hand",
+  "message.isometric-renders-forked.no_block": "No block selected",
+  "message.isometric-renders-forked.no_entity": "No entity selected",
+  "message.isometric-renders-forked.incomplete_selection": "You do not have a completed area selection",
+
+  "message.isometric-renders-forked.selection_cleared": "Area selection cleared",
+  "message.isometric-renders-forked.selection_started": "Area selection started at %s",
+  "message.isometric-renders-forked.selection_finished": "Area selection finished from %s to %s"
+}
