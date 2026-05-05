@@ -1,5 +1,6 @@
 package net.oldmanyounger.isometricrendersforked.render;
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
@@ -7,10 +8,19 @@ import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.neoforged.neoforge.client.model.data.ModelData;
+import net.oldmanyounger.isometricrendersforked.IsometricRendersForked;
 import net.oldmanyounger.isometricrendersforked.property.DefaultPropertyBundle;
 import net.oldmanyounger.isometricrendersforked.util.ExportPathSpec;
+import org.joml.Matrix4f;
+import org.joml.Vector3f;
+import org.joml.Vector4f;
+
+import javax.annotation.Nullable;
 
 /**
  * Renderable wrapper for a selected world area.
@@ -56,6 +66,52 @@ public class AreaRenderable extends DefaultRenderable<AreaRenderable.AreaPropert
         return new AreaRenderable(first, second);
     }
 
+    // Copies a real world block entity into local area-render coordinates.
+    private static @Nullable BlockEntity copyBlockEntityForAreaRender(Level level, BlockPos worldPos, BlockPos localPos, BlockState state) {
+        BlockEntity originalBlockEntity = level.getBlockEntity(worldPos);
+
+        if (originalBlockEntity == null) {
+            return null;
+        }
+
+        CompoundTag nbt = originalBlockEntity.saveWithFullMetadata(level.registryAccess());
+
+        // Force local coordinates so block entity renderers evaluate the render snapshot position.
+        nbt.putInt("x", localPos.getX());
+        nbt.putInt("y", localPos.getY());
+        nbt.putInt("z", localPos.getZ());
+
+        BlockEntity copiedBlockEntity = BlockEntity.loadStatic(localPos, state, nbt, level.registryAccess());
+
+        if (copiedBlockEntity == null) {
+            IsometricRendersForked.LOGGER.warn("Failed to copy block entity for area render at {}", worldPos);
+            return null;
+        }
+
+        copiedBlockEntity.setLevel(level);
+        copiedBlockEntity.setBlockState(state);
+
+        return copiedBlockEntity;
+    }
+
+    // Applies balanced block lighting so rotated block faces do not fall into one-sided shadow.
+    @Override
+    public void setupLighting(Matrix4f modelViewMatrix) {
+        Matrix4f lightTransform = new Matrix4f(modelViewMatrix);
+        lightTransform.invert();
+
+        Vector4f keyLight = new Vector4f(0.35F, 0.75F, 1.0F, 0.0F);
+        Vector4f fillLight = new Vector4f(-0.65F, -0.35F, -0.55F, 0.0F);
+
+        keyLight.mul(lightTransform);
+        fillLight.mul(lightTransform);
+
+        RenderSystem.setShaderLights(
+                new Vector3f(keyLight.x, keyLight.y, keyLight.z).normalize(),
+                new Vector3f(fillLight.x, fillLight.y, fillLight.z).normalize()
+        );
+    }
+
     // Emits all non-air blocks and block entities inside the selected area.
     @Override
     public void emitVertices(PoseStack poseStack, MultiBufferSource bufferSource, float tickDelta) {
@@ -84,15 +140,22 @@ public class AreaRenderable extends DefaultRenderable<AreaRenderable.AreaPropert
             poseStack.pushPose();
             poseStack.translate(localX, localY, localZ);
 
+            BlockPos localPos = new BlockPos(localX, localY, localZ);
+            BlockEntity blockEntity = copyBlockEntityForAreaRender(minecraft.level, worldPos, localPos, state);
+
+            // Pass block entity model data into NeoForge's block model path.
+            ModelData modelData = blockEntity == null ? ModelData.EMPTY : blockEntity.getModelData();
+
             minecraft.getBlockRenderer().renderSingleBlock(
                     state,
                     poseStack,
                     bufferSource,
                     LightTexture.FULL_BRIGHT,
-                    OverlayTexture.NO_OVERLAY
+                    OverlayTexture.NO_OVERLAY,
+                    modelData,
+                    null
             );
 
-            BlockEntity blockEntity = minecraft.level.getBlockEntity(worldPos);
             if (blockEntity != null) {
                 minecraft.getBlockEntityRenderDispatcher().renderItem(
                         blockEntity,
@@ -102,10 +165,8 @@ public class AreaRenderable extends DefaultRenderable<AreaRenderable.AreaPropert
                         OverlayTexture.NO_OVERLAY
                 );
             }
-
             poseStack.popPose();
         }
-
         poseStack.popPose();
     }
 

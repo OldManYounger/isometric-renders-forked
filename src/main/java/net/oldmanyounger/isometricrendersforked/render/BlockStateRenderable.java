@@ -1,5 +1,6 @@
 package net.oldmanyounger.isometricrendersforked.render;
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
@@ -13,10 +14,14 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.neoforged.neoforge.client.model.data.ModelData;
 import net.oldmanyounger.isometricrendersforked.IsometricRendersForked;
 import net.oldmanyounger.isometricrendersforked.property.DefaultPropertyBundle;
 import net.oldmanyounger.isometricrendersforked.util.ExportPathSpec;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Matrix4f;
+import org.joml.Vector3f;
+import org.joml.Vector4f;
 
 /**
  * Renderable wrapper for a block state.
@@ -75,6 +80,9 @@ public class BlockStateRenderable extends DefaultRenderable<DefaultPropertyBundl
 
         blockEntity.setLevel(level);
 
+        // Keep the copied block entity state aligned with the rendered block state.
+        blockEntity.setBlockState(state);
+
         if (blockEntityNbt != null) {
             loadBlockEntityNbt(blockEntity, blockEntityNbt, level);
         }
@@ -98,6 +106,24 @@ public class BlockStateRenderable extends DefaultRenderable<DefaultPropertyBundl
         }
     }
 
+    // Applies balanced block lighting so rotated block faces do not fall into one-sided shadow.
+    @Override
+    public void setupLighting(Matrix4f modelViewMatrix) {
+        Matrix4f lightTransform = new Matrix4f(modelViewMatrix);
+        lightTransform.invert();
+
+        Vector4f keyLight = new Vector4f(0.35F, 0.75F, 1.0F, 0.0F);
+        Vector4f fillLight = new Vector4f(-0.65F, -0.35F, -0.55F, 0.0F);
+
+        keyLight.mul(lightTransform);
+        fillLight.mul(lightTransform);
+
+        RenderSystem.setShaderLights(
+                new Vector3f(keyLight.x, keyLight.y, keyLight.z).normalize(),
+                new Vector3f(fillLight.x, fillLight.y, fillLight.z).normalize()
+        );
+    }
+
     // Emits this block's model and optional block entity vertices.
     @Override
     public void emitVertices(PoseStack poseStack, MultiBufferSource bufferSource, float tickDelta) {
@@ -106,12 +132,17 @@ public class BlockStateRenderable extends DefaultRenderable<DefaultPropertyBundl
         poseStack.pushPose();
         poseStack.translate(-0.5F, -0.5F, -0.5F);
 
+        // Pass NeoForge model data so dynamic block models can render from their block entity state.
+        ModelData modelData = this.blockEntity == null ? ModelData.EMPTY : this.blockEntity.getModelData();
+
         minecraft.getBlockRenderer().renderSingleBlock(
                 this.state,
                 poseStack,
                 bufferSource,
                 LightTexture.FULL_BRIGHT,
-                OverlayTexture.NO_OVERLAY
+                OverlayTexture.NO_OVERLAY,
+                modelData,
+                null
         );
 
         if (this.blockEntity != null) {
