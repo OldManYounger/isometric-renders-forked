@@ -2,7 +2,7 @@
 
 A NeoForge 1.21.1 fork/port of the original [Isometric Renders](https://github.com/glisco03/isometric-renders) mod.
 
-This mod lets you create high-resolution PNG renders of Minecraft objects directly in-game. It is intended for documentation, modpack notes, wiki images, item catalogs, and visual reference exports.
+This is a fork of the Fabric mod, Isometric Renders. It allows you to export high resolution renders of items, blocks, entities and selected areas. It's somewhat crude but serves it's purpose for me well enough. Feel free to leave feedback in the Curseforge comments.
 
 ## Features
 
@@ -15,13 +15,13 @@ This mod lets you create high-resolution PNG renders of Minecraft objects direct
 - Select and render world areas/structures
 - Export renders as PNG files
 - Vanilla NeoForge GUI controls for:
-  - Scale
-  - Rotation
-  - Slant
-  - X/Y offset
-  - Entity yaw/pitch
-  - Export resolution
-  - Coarse/fine adjustment mode
+    - Scale
+    - Rotation
+    - Slant
+    - X/Y offset
+    - Entity yaw/pitch
+    - Export resolution
+    - Coarse/fine adjustment mode
 
 ## Requirements
 
@@ -139,26 +139,6 @@ Exports are written under the Minecraft game directory:
 
 ```text
 renders/
-```
-
-## Build From Source
-
-Clone the repository, then run:
-
-```bash
-./gradlew build
-```
-
-On Windows:
-
-```powershell
-.\gradlew.bat build
-```
-
-The built jar will be generated under:
-
-```text
-build/libs/
 ```
 
 ## Notes
